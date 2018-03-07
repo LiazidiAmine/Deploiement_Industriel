@@ -1,1 +1,1 @@
-{"virtualbox":{"/vagrant":{"guestpath":"/vagrant","hostpath":"C:/Users/a624161/OneDrive/Phd/Cours/Vagrant/git/TD/practice_2","disabled":false,"__vagrantfile":true}}}
+{"virtualbox":{"/vagrant/www":{"guestpath":"/vagrant/www","hostpath":"C:/Users/a624161/OneDrive/Phd/Cours/Vagrant/git/TD/practice_2/www","disabled":false,"__vagrantfile":true},"/vagrant/sites-enabled":{"guestpath":"/vagrant/sites-enabled","hostpath":"C:/Users/a624161/OneDrive/Phd/Cours/Vagrant/git/TD/practice_2/sites-enabled","disabled":false,"__vagrantfile":true}}}
