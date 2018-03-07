@@ -1,0 +1,83 @@
+# OS base for the container
+FROM phusion/baseimage
+
+# Maintenance of the dockerfile
+MAINTAINER Badre Belabbess <badre.belabbess@tos.net>
+
+# Software versions
+ENV JAVA_VERSION 1.8
+ENV SCALA_VERSION 2.11
+ENV ZK_VERSION 3.4.11
+ENV SBT_VERSION 0.13.0
+ENV KAFKA_VERSION 0.9.0.1
+ENV REDIS_VERSION 4.0.2
+ENV INFLUXDB_VERSION 1.1.1
+ENV SPARK_VERSION 2.1.0
+ENV HADOOP_VERSION 2.7
+ENV TOMCAT_VERSION 8.5.23
+ENV SESAME_VERSION 2.2.2
+ENV VIRTUOSO_VERSION 7.2.0 
+
+ENV HOME /opt
+WORKDIR $HOME
+
+# Destination folders
+ENV JAVA_HOME /usr/lib/jvm/java-8-openjdk-amd64
+ENV ZK_HOME /opt/zookeeper-$ZK_VERSION
+ENV KAFKA_HOME /opt/kafka-$SCALA_VERSION-$KAFKA_VERSION
+ENV SPARK_HOME /opt/apache-spark-$SPARK_VERSION
+ENV REDIS_HOME /opt/redis-$REDIS_VERSION
+ENV INFLUXDB_HOME /opt/redis-$INFLUXDB_VERSION
+ENV SESAME_HOME /opt/
+
+# Useful tools for managing the container & the application
+RUN apt-get update && \
+    apt-get install -y wget maven make gcc logrotate supervisor zip vim software-properties-common net-tools dos2unix && \
+    add-apt-repository main && \
+    rm -rf /var/lib/apt/lists/* && \
+    apt-get clean
+
+# Configure Supervisor to display web interface
+RUN rm /etc/supervisor/supervisord.conf
+ADD Configuration/Supervisor/supervisord.conf /etc/supervisor/
+
+
+# Upgrade Java to last version
+RUN rm -rf java-8-openjdk-amd64 && \
+    apt-get install -y  software-properties-common && \
+    add-apt-repository ppa:webupd8team/java -y && \
+    apt-get update -y &&\
+    apt-get install -y default-jdk && \
+    echo "JAVA_HOME = /usr/lib/jvm/java-8-openjdk-amd64" >  /etc/environment
+    #source /etc/environment
+
+# Install Zookeeper
+RUN wget --no-check-certificate -P /tmp http://apache.mindstudios.com/zookeeper/zookeeper-$ZK_VERSION/zookeeper-$ZK_VERSION.tar.gz && \
+    tar xfz /tmp/zookeeper-$ZK_VERSION.tar.gz -C /opt && \
+    rm /tmp/zookeeper-$ZK_VERSION.tar.gz
+
+# Configure Zookeeper
+RUN cp $ZK_HOME/conf/zoo_sample.cfg $ZK_HOME/conf/zoo.cfg
+
+# Run Zookeper under supervision
+RUN mkdir /var/log/zookeeper
+ADD Configuration/Supervisor/zookeeper.conf /etc/supervisor/conf.d/
+
+# Install Kafka
+RUN wget --no-check-certificate -P /tmp  http://apache.crihan.fr/dist/kafka/$KAFKA_VERSION/kafka_$SCALA_VERSION-$KAFKA_VERSION.tgz  && \
+    tar xfz /tmp/kafka_$SCALA_VERSION-$KAFKA_VERSION.tgz -C /opt && \
+    rm /tmp/kafka_$SCALA_VERSION-$KAFKA_VERSION.tgz && \
+    rm /opt/kafka_2.11-0.9.0.1/config/server.properties
+
+ADD Configuration/Kafka/server.properties /opt/kafka_2.11-0.9.0.1/config/
+
+# Run Kafka under supervision
+RUN mkdir /var/log/kafka
+ADD Configuration/Supervisor/kafka.conf  /etc/supervisor/conf.d
+
+
+# Expose ports for each application 
+EXPOSE 2181 9092 9001 9000 6379 8086 8083 8088 8080 8081 8042 4040 7077 8787 1111 8890 4040
+
+# Launch all components using Supervisor
+CMD ["supervisord", "-n"]
